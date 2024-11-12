@@ -1,0 +1,158 @@
+version: "3"
+services:
+
+  eureka-service:
+    image: eureka
+    container_name: "MsEureka"
+    build:
+      context: ./MsEureka
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    networks:
+      - eureka-network
+
+  gateway-service:
+    image: gatewayimage
+    container_name: "API_Gateway_Server"
+    build:
+      context: ./API_Gateway_Server
+      dockerfile:  Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    depends_on:
+      - eureka-service
+      - node-service
+      - candidat-service
+      - client-service
+      - gestionVol-service
+      - offreEtpromo-service
+
+    networks:
+      - eureka-network
+  mongo-service:
+    image: mongo
+    container_name: "mongodb"
+    build:
+      context: ./node-express-mongodb
+      dockerfile: Dockerfile
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=Aya
+      - MONGO_INITDB_ROOT_PASSWORD=1234
+      - MONGO_INITDB_DATABASE=SheCodes1_db
+    depends_on:
+      - eureka-service
+    networks:
+      - eureka-network
+
+
+  node-service:
+    image: nodeimage
+    container_name: "node-express-mongodb"
+    build:
+      context: ./node-express-mongodb
+      dockerfile: Dockerfile
+    ports:
+      - "8086:8086"
+    hostname: booking
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+      - MONGO_URI=mongodb://root:1234@mongo-service:27017/SheCodes1_db?authSource=admin
+    depends_on:
+      - eureka-service
+    networks:
+      - eureka-network
+
+
+  candidat-service:
+    image: hotelimage
+    container_name: "Candidat"
+    build:
+      context: ./Candidat
+      dockerfile: Dockerfile
+    ports:
+      - "8089:8089"
+    hostname: hotel
+    environment:
+    - SPRING_DATASOURCE_URL=jdbc:h2:mem:DBJobs;DB_CLOSE_DELAY=-1
+    - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+    - SPRING_DATASOURCE_USERNAME=Aya
+    - SPRING_DATASOURCE_PASSWORD=1234
+    - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    depends_on:
+      - eureka-service
+    networks:
+      - eureka-network
+
+  client-service:
+    image: clientimage
+    container_name: "Client"
+    build:
+      context: ./Client
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    hostname: client
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:DBJobs;DB_CLOSE_DELAY=-1
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+      - SPRING_DATASOURCE_USERNAME=Aya
+      - SPRING_DATASOURCE_PASSWORD=1234
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    depends_on:
+      - eureka-service
+    networks:
+      - eureka-network
+
+  gestionVol-service:
+    image: gestionvolsimage
+    container_name: "GestionVols"
+    build:
+      context: ./GestionVols
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    hostname: gestionVol
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:DBJobs;DB_CLOSE_DELAY=-1
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+      - SPRING_DATASOURCE_USERNAME=Aya
+      - SPRING_DATASOURCE_PASSWORD=1234
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    depends_on:
+      - eureka-service
+    networks:
+      - eureka-network
+
+  offreEtpromo-service:
+    image: offreetpromotion
+    container_name: "offreETpromo"
+    build:
+      context: ./offreETpromo
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    hostname: offreEtpromo
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:DBJobs;DB_CLOSE_DELAY=-1
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+      - SPRING_DATASOURCE_USERNAME=Aya
+      - SPRING_DATASOURCE_PASSWORD=1234
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    depends_on:
+      - eureka-service
+    networks:
+      - eureka-network
+
+
+networks:
+  eureka-network:
+    driver: bridge
